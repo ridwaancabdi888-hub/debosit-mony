@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/* Dark mode is driven by a class on <html> so the header toggle can control it,
+   with the OS preference used only as the initial default. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --app-bg: #f6f7f9;
+  --app-surface: #ffffff;
+  --app-surface-2: #fbfcfd;
+  --app-border: #e3e6ea;
+  --app-border-strong: #cfd4da;
+  --app-text: #14181d;
+  --app-text-muted: #636c78;
+  --app-text-faint: #8c949f;
+  --app-accent: #0f766e;
+  --app-accent-hover: #115e58;
+  --app-accent-soft: #e6f4f2;
+  --app-ring: #14b8a6;
+
+  --app-active: #1d4ed8;
+  --app-active-bg: #e8edfd;
+  --app-due: #a25708;
+  --app-due-bg: #fdf1dc;
+  --app-paid: #0f766e;
+  --app-paid-bg: #e2f3f0;
+  --app-overdue: #b4232a;
+  --app-overdue-bg: #fceceb;
+}
+
+:root.dark {
+  --app-bg: #0d1014;
+  --app-surface: #161b21;
+  --app-surface-2: #1b2128;
+  --app-border: #262e37;
+  --app-border-strong: #364049;
+  --app-text: #e9edf1;
+  --app-text-muted: #9aa5b1;
+  --app-text-faint: #6f7b87;
+  --app-accent: #2dd4bf;
+  --app-accent-hover: #5eead4;
+  --app-accent-soft: #10312e;
+  --app-ring: #2dd4bf;
+
+  --app-active: #93b4fd;
+  --app-active-bg: #16244a;
+  --app-due: #f5c069;
+  --app-due-bg: #3a2a10;
+  --app-paid: #6ee0cd;
+  --app-paid-bg: #0e2e2b;
+  --app-overdue: #fca5a2;
+  --app-overdue-bg: #3b1616;
+}
+
+@theme inline {
+  --color-bg: var(--app-bg);
+  --color-surface: var(--app-surface);
+  --color-surface-2: var(--app-surface-2);
+  --color-line: var(--app-border);
+  --color-line-strong: var(--app-border-strong);
+  --color-ink: var(--app-text);
+  --color-muted: var(--app-text-muted);
+  --color-faint: var(--app-text-faint);
+  --color-accent: var(--app-accent);
+  --color-accent-hover: var(--app-accent-hover);
+  --color-accent-soft: var(--app-accent-soft);
+
+  --color-st-active: var(--app-active);
+  --color-st-active-bg: var(--app-active-bg);
+  --color-st-due: var(--app-due);
+  --color-st-due-bg: var(--app-due-bg);
+  --color-st-paid: var(--app-paid);
+  --color-st-paid-bg: var(--app-paid-bg);
+  --color-st-overdue: var(--app-overdue);
+  --color-st-overdue-bg: var(--app-overdue-bg);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+* {
+  border-color: var(--app-border);
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Money and dates line up in columns when they share a tabular figure width. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--app-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes app-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: app-rise 0.18s ease-out both;
+}
