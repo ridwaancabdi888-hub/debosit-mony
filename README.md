@@ -301,7 +301,8 @@ only). So it keeps passing as you add real customers.
 
 ```bash
 npm run dev                                          # terminal 1
-npm i -D playwright && npx playwright install chromium
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium
 E2E_USERNAME=ridwan E2E_PASSWORD=... node tests/e2e.mjs
 ```
 
