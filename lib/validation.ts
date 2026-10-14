@@ -1,5 +1,5 @@
-import { isValidIsoDate } from "@/lib/dates";
-import { MAX_DEPOSIT_CENTS, parseAmountToCents } from "@/lib/money";
+import { isValidIsoDate } from "./dates.ts";
+import { MAX_DEPOSIT_CENTS, parseAmountToCents } from "./money.ts";
 import type { TranslationKey } from "@/i18n/translations";
 
 /**

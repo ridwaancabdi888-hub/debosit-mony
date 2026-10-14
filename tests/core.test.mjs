@@ -16,6 +16,29 @@ import {
   formatDate,
   isValidIsoDate,
 } from "../lib/dates.ts";
+import {
+  daysRemaining,
+  deriveStatus,
+  isDueSoon,
+} from "../lib/status.ts";
+import { validateDeposit } from "../lib/validation.ts";
+
+const makeDeposit = (overrides = {}) => ({
+  id: "00000000-0000-4000-8000-000000000001",
+  fullName: "Ayaan Cabdi",
+  phone: "+252 61 234 5678",
+  depositCents: 100_000,
+  depositDate: "2026-10-01",
+  durationDays: 30,
+  dueDate: "2026-10-31",
+  grossReturnCents: 145_000,
+  brokerFeeCents: 10_000,
+  netReturnCents: 135_000,
+  profitCents: 35_000,
+  paidAt: null,
+  createdAt: "2026-10-01T08:00:00.000Z",
+  ...overrides,
+});
 
 test("money calculations match the documented business examples", () => {
   const examples = [
@@ -97,4 +120,95 @@ test("date display is deterministic in Somali and English", () => {
   assert.equal(formatDate("2026-10-05", "so"), "05 Okt 2026");
   assert.equal(formatDate("2026-10-05", "en"), "05 Oct 2026");
   assert.equal(formatDate("not-a-date", "en"), "not-a-date");
+});
+
+test("deposit validation normalizes valid form input", () => {
+  assert.deepEqual(
+    validateDeposit({
+      fullName: "  Ayaan   Cabdi  ",
+      phone: "  +252   61 234 5678  ",
+      depositAmount: "1,250.50",
+      depositDate: "2026-10-14",
+      durationDays: "90",
+    }),
+    {
+      ok: true,
+      value: {
+        fullName: "Ayaan Cabdi",
+        phone: "+252 61 234 5678",
+        depositCents: 125_050,
+        depositDate: "2026-10-14",
+        durationDays: 90,
+      },
+    },
+  );
+});
+
+test("deposit validation reports every invalid field in one pass", () => {
+  assert.deepEqual(
+    validateDeposit({
+      fullName: "A",
+      phone: "12ab",
+      depositAmount: "0",
+      depositDate: "2026-02-29",
+      durationDays: "0",
+    }),
+    {
+      ok: false,
+      errors: {
+        fullName: "validation.nameTooShort",
+        phone: "validation.phoneInvalid",
+        depositAmount: "validation.depositPositive",
+        depositDate: "validation.dateInvalid",
+        durationDays: "validation.durationPositive",
+      },
+    },
+  );
+});
+
+test("deposit validation enforces documented upper bounds", () => {
+  const base = {
+    fullName: "Ayaan Cabdi",
+    phone: "+252 61 234 5678",
+    depositAmount: "1000000000.01",
+    depositDate: "2026-10-14",
+    durationDays: "3651",
+  };
+
+  const result = validateDeposit(base);
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, {
+    depositAmount: "validation.depositTooLarge",
+    durationDays: "validation.durationTooLong",
+  });
+
+  assert.equal(
+    validateDeposit({
+      ...base,
+      depositAmount: "1000000000.00",
+      durationDays: "3650",
+    }).ok,
+    true,
+  );
+});
+
+test("deposit status covers paid, overdue, due-today and active states", () => {
+  const today = "2026-10-14";
+  assert.equal(deriveStatus(makeDeposit({ paidAt: "2026-10-10" }), today), "paid");
+  assert.equal(deriveStatus(makeDeposit({ dueDate: "2026-10-13" }), today), "overdue");
+  assert.equal(deriveStatus(makeDeposit({ dueDate: today }), today), "due_today");
+  assert.equal(deriveStatus(makeDeposit({ dueDate: "2026-10-15" }), today), "active");
+});
+
+test("due-soon includes today through seven days and excludes paid deposits", () => {
+  const today = "2026-10-14";
+  assert.equal(isDueSoon(makeDeposit({ dueDate: today }), today), true);
+  assert.equal(isDueSoon(makeDeposit({ dueDate: "2026-10-21" }), today), true);
+  assert.equal(isDueSoon(makeDeposit({ dueDate: "2026-10-22" }), today), false);
+  assert.equal(isDueSoon(makeDeposit({ dueDate: "2026-10-13" }), today), false);
+  assert.equal(
+    isDueSoon(makeDeposit({ dueDate: "2026-10-15", paidAt: "2026-10-10" }), today),
+    false,
+  );
+  assert.equal(daysRemaining(makeDeposit({ dueDate: "2026-10-21" }), today), 7);
 });

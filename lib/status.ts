@@ -1,4 +1,4 @@
-import { diffDays } from "@/lib/dates";
+import { diffDays } from "./dates.ts";
 import type { Deposit } from "@/lib/types";
 
 export type DepositStatus = "paid" | "overdue" | "due_today" | "active";
