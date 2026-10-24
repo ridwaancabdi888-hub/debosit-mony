@@ -22,6 +22,7 @@ import {
   isDueSoon,
 } from "../lib/status.ts";
 import { validateDeposit } from "../lib/validation.ts";
+import { containDialogFocus } from "../lib/dialog-focus.ts";
 
 const makeDeposit = (overrides = {}) => ({
   id: "00000000-0000-4000-8000-000000000001",
@@ -211,4 +212,82 @@ test("due-soon includes today through seven days and excludes paid deposits", ()
     false,
   );
   assert.equal(daysRemaining(makeDeposit({ dueDate: "2026-10-21" }), today), 7);
+});
+
+function focusFixture(count = 2) {
+  let focused = null;
+  let prevented = false;
+  const elements = Array.from({ length: count }, (_, index) => ({
+    hidden: false,
+    getAttribute: () => null,
+    focus: () => {
+      focused = index;
+    },
+  }));
+  const panel = {
+    querySelectorAll: () => elements,
+    contains: (element) => elements.includes(element),
+    focus: () => {
+      focused = "panel";
+    },
+  };
+  const event = (shiftKey = false) => ({
+    key: "Tab",
+    shiftKey,
+    preventDefault: () => {
+      prevented = true;
+    },
+  });
+
+  return {
+    elements,
+    panel,
+    event,
+    result: () => ({ focused, prevented }),
+  };
+}
+
+test("dialog focus wraps forward and backward at its boundaries", () => {
+  const forward = focusFixture();
+  assert.equal(
+    containDialogFocus(forward.event(), forward.panel, forward.elements[1]),
+    true,
+  );
+  assert.deepEqual(forward.result(), { focused: 0, prevented: true });
+
+  const backward = focusFixture();
+  assert.equal(
+    containDialogFocus(
+      backward.event(true),
+      backward.panel,
+      backward.elements[0],
+    ),
+    true,
+  );
+  assert.deepEqual(backward.result(), { focused: 1, prevented: true });
+});
+
+test("dialog focus recovers when focus starts outside the panel", () => {
+  const fixture = focusFixture();
+  containDialogFocus(fixture.event(), fixture.panel, {});
+  assert.deepEqual(fixture.result(), { focused: 0, prevented: true });
+});
+
+test("dialog panel receives focus when it has no interactive controls", () => {
+  const fixture = focusFixture(0);
+  containDialogFocus(fixture.event(), fixture.panel, null);
+  assert.deepEqual(fixture.result(), { focused: "panel", prevented: true });
+});
+
+test("non-Tab keys do not change dialog focus", () => {
+  const fixture = focusFixture();
+  assert.equal(
+    containDialogFocus(
+      { ...fixture.event(), key: "Enter" },
+      fixture.panel,
+      fixture.elements[0],
+    ),
+    false,
+  );
+  assert.deepEqual(fixture.result(), { focused: null, prevented: false });
 });

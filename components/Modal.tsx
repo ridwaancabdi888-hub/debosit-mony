@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
 import { useT } from "@/i18n/LanguageProvider";
+import { containDialogFocus } from "@/lib/dialog-focus";
 
 /**
  * Small accessible dialog: Escape closes, the backdrop closes, focus moves
@@ -33,7 +34,15 @@ export function Modal({
     restoreFocusTo.current = document.activeElement as HTMLElement | null;
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (panelRef.current) {
+        containDialogFocus(event, panelRef.current, document.activeElement);
+      }
     };
     document.addEventListener("keydown", onKey);
 
@@ -67,6 +76,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         className="animate-rise relative flex max-h-[92dvh] w-full flex-col rounded-t-2xl border border-line bg-surface shadow-xl sm:max-w-lg sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
